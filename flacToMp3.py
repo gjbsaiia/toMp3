@@ -19,19 +19,19 @@ def main():
 	line = raw_input("single or batch? ")
 	print("*****************************************************")
 	if(line == "single"):
-		line = raw_input("Enter the path to your .flac file: ")
+		line = raw_input("Enter the path to your .flac file relative to the program: ")
 		print("*****************************************************")
 		fileD = fileData()
 		extractData(fileD, line)
 		input = fileD.path+fileD.name+"."+fileD.ext
 		output = fileD.path+fileD.name+".mp3"
-		command = "ffmpeg -i "+input+" -ab 320k -map_metadata 0 -id3v2_version 3 "+output
+		command = "ffmpeg -i "+input+" -ab 320k -map_metadata 0 -id3v2_version 3 "+output+" >/dev/null 2>&1"
 		print("converting "+fileD.name+"."+fileD.ext+"...")
 		subprocess.check_output(command, shell=True)
 		print("...done")
 		print("*****************************************************")
 	else:
-		line = raw_input("Enter the path to your directory: ")
+		line = raw_input("Enter the path to your directory relative to the program: ")
 		print("*****************************************************")
 		fileArray = []
 		fileArray = scanDir(line, fileArray)
@@ -56,7 +56,7 @@ def moreThanOne(fileArray):
 	for fileD in fileArray:
 		input = fileD.path+fileD.name+"."+fileD.ext
 		output = fileD.path+fileD.name+".mp3"
-		command = "ffmpeg -i "+input+" -ab 320k -map_metadata 0 -id3v2_version 3 "+output
+		command = "ffmpeg -i "+input+" -ab 320k -map_metadata 0 -id3v2_version 3 "+output+" >/dev/null 2>&1"
 		print("converting "+fileD.name+"."+fileD.ext+"...")
 		subprocess.check_output(command, shell=True)
 		print("...done")
@@ -66,11 +66,11 @@ def extractData(fileD, raw):
 	firstsplit = raw.split("/")
 	i = 0
 	while(i < (len(firstsplit) - 1)):
-		if(firstsplit[i] != ''):
-			fileD.path = fileD.path + "/" + firstsplit[i]
+		if(i == 0):
+			fileD.path = firstsplit[i] + "/"
+		else:
+			fileD.path = fileD.path + firstsplit[i] + "/"
 		i += 1
-	if(fileD.path != ''):
-		fileD.path = fileD.path + "/"
 	secondsplit = firstsplit[(len(firstsplit)-1)].split(".")
 	fileD.name = secondsplit[0]
 	fileD.ext = secondsplit[1]
