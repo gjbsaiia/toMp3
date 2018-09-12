@@ -1,4 +1,4 @@
 # toMp3
 lil project to convert any audio file to .mp3 w ffmpeg</br>
 - you need ffmpeg to run this program </br>
-- started w .flac, it's only .flac right now
+- can convert .flac, .m4a, .wav, .wma, .caf, and .aif audio file formats to .mp3 including metadata
