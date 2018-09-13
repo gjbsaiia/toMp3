@@ -39,6 +39,7 @@ class GUI(Frame):
 		entries[3].configure(text="    ...Done.")
 
 	def makeform(self):
+		root.title(".mp3 Converter")	
 		title = Label(root, text="Griffin\'s to .mp3 Converter")
 		title.pack(side=TOP, padx=15, pady=15)
 		acknowledge = Label(root, text = "Special thanks to the genius' who developed ffmpeg")
@@ -179,5 +180,4 @@ def extractData(fileD, raw):
 if __name__ == "__main__":
 		root = Tk()
 		gui =  GUI(root)
-		root.title(".mp3 Converter")
 		root.mainloop()
