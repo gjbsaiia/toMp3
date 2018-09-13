@@ -14,6 +14,62 @@ class fileData:
 		self.path = ""
 		self.ext = ""
 
+class GUI(Frame):
+
+	def __init__(self, master):
+		Frame.__init__(self, master)
+		ents = self.makeform()
+		self.bind('<Return>', (lambda event, e=ents: self.fetch(e)))
+		b1 = Button(root, text="Run", command=(lambda e=ents: self.fetch(e)))
+		b1.pack(side=LEFT, padx=5, pady=5)
+		b2 = Button(root, text="Quit", command=root.quit)
+		b2.pack(side=RIGHT, padx=5, pady=5)
+
+	def updateGUI(self):
+		root.update_idletasks()
+
+	def fetch(self, entries):
+		entries[2].configure(text="Running...")
+		choice = entries[0].get()
+		path = entries[1].get()
+		entries[0].delete(0, END)
+		entries[1].delete(0, END)
+		self.updateGUI()
+		run(choice, path, entries)
+		entries[3].configure(text="    ...Done.")
+
+	def makeform(self):
+		title = Label(root, text="Griffin\'s to .mp3 Converter")
+		title.pack(side=TOP, padx=15, pady=15)
+		acknowledge = Label(root, text = "Special thanks to the genius' who developed ffmpeg")
+		acknowledge.pack(padx=5)
+		border = Label(root, text="----------------------------------------------------------------------------")
+		border.pack(pady=5)
+		entries = []
+		params = ["single or batch?", "/path/to/your/file_or_directory"]
+		for param in params:
+			row = Frame(root)
+			lab = Label(row, width=30, text=param, anchor='w')
+			ent = Entry(row)
+			row.pack(side=TOP, fill=X, padx=20, pady=20)
+			lab.pack(side=LEFT)
+			ent.pack(side=RIGHT, expand=YES, fill=X)
+			entries.append(ent)
+		warning = Label(root, text = "**Note: ffmpeg doesn't support spaces in file names.")
+		warning.pack(padx=5)
+		border3 = Label(root, text="----------------------------------------------------------------------------")
+		border3.pack(pady=5)
+		process = Label(root)
+		process.pack()
+		entries.append(process)
+		output = Label(root)
+		output.pack()
+		entries.append(output)
+		border2 = Label(root, text="----------------------------------------------------------------------------")
+		border2.pack(pady=5)
+		return entries
+
+
 # dictionary to store ffmpeg commands
 def flac():
 	command = []
@@ -65,7 +121,7 @@ commands = {"flac": flac,
 			"aif": aiff
 }
 
-def run(line, path):
+def run(line, path, entries):
 	try:
 		fileArray = []
 		if(line == "single" or line == "Single"):
@@ -74,10 +130,12 @@ def run(line, path):
 			fileArray.append(fileD)
 		else:
 			fileArray = scanDir(path, fileArray)
-		convert(fileArray)
-		return True
-	except subprocess.CalledProcessError:
-		return False
+		convert(fileArray, entries)
+	except IndexError:
+		line = "batch"
+		run(line, path, entries)
+	except OSError:
+		entries[3].configure(text="     ...Error locating file(s)")
 
 def scanDir(directory, fileArray):
 	for file in os.listdir(directory):
@@ -90,13 +148,18 @@ def scanDir(directory, fileArray):
 			fileArray.append(fileD)
 	return fileArray
 
-def convert(fileArray):
-	for fileD in fileArray:
-		input = fileD.path+fileD.name+"."+fileD.ext
-		output = fileD.path+fileD.name
-		commandFrame = commands[fileD.ext]()
-		command = commandFrame[0]+input+commandFrame[1]+output+commandFrame[2]
-		subprocess.check_output(command, shell=True)
+def convert(fileArray, entries):
+	try:
+		for fileD in fileArray:
+			input = fileD.path+fileD.name+"."+fileD.ext
+			output = fileD.path+fileD.name
+			commandFrame = commands[fileD.ext]()
+			command = commandFrame[0]+input+commandFrame[1]+output+commandFrame[2]
+			subprocess.check_output(command, shell=True)
+	except subprocess.CalledProcessError:
+		entries[3].configure(text="Error converting "+fileD.name+"."+fileD.ext)
+	except KeyError:
+		entries[3].configure(text="Error not a supported file format.")
 
 def extractData(fileD, raw):
 	firstsplit = raw.split("/")
@@ -111,53 +174,10 @@ def extractData(fileD, raw):
 	fileD.name = secondsplit[0]
 	fileD.ext = secondsplit[1]
 
-def fetch(entries):
-	choice = entries[0].get()
-	path = entries[1].get()
-	entries[0].delete(0, END)
-	entries[1].delete(0, END)
-	next(choice, path)
-
-def next(choice, path):
-	status = run(choice, path)
-	if(status):
-		output.configure(text="Done.")
-	else:
-		output.configure(text="Can't find file.")
-
-def makeform(root):
-	entries = []
-	params = ["single or batch?", "/path/to/your/file_or_directory"]
-	for param in params:
-		row = Frame(root)
-		lab = Label(row, width=30, text=param, anchor='w')
-		ent = Entry(row)
-		row.pack(side=TOP, fill=X, padx=20, pady=20)
-		lab.pack(side=LEFT)
-		ent.pack(side=RIGHT, expand=YES, fill=X)
-		entries.append(ent)
-	return entries
-
 
 #Execute the application
 if __name__ == "__main__":
 		root = Tk()
-		title = Label(root, text="Griffin\'s to .mp3 Converter")
-		title.pack(side=TOP, padx=15, pady=15)
-		acknowledge = Label(root, text = "Special thanks to the genius' who developed ffmpeg")
-		acknowledge.pack(padx=5)
-		border = Label(root, text="----------------------------------------------------------------------------")
-		border.pack(pady=5)
-		ents = makeform(root)
-		warning = Label(root, text = "**Note: ffmpeg doesn't support spaces in file names.")
-		warning.pack(padx=5)
-		border2 = Label(root, text="----------------------------------------------------------------------------")
-		border2.pack(pady=5)
-		root.bind('<Return>', (lambda event, e=ents: fetch(e)))
-		b1 = Button(root, text="Run", command=(lambda e=ents: fetch(e)))
-		b1.pack(side=LEFT, padx=5, pady=5)
-		b2 = Button(root, text="Quit", command=root.quit)
-		b2.pack(side=RIGHT, padx=5, pady=5)
-		output = Label(root)
-		output.pack()
+		gui =  GUI(root)
+		root.title(".mp3 Converter")
 		root.mainloop()
